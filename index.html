@@ -175,9 +175,40 @@ dl.imp{margin:8px 0 0;display:grid;gap:10px 22px;grid-template-columns:minmax(0,
 dl.imp dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 dl.imp dd{margin:2px 0 0;max-width:68ch}
 @media (min-width:900px){.goals{grid-template-columns:repeat(2,minmax(0,1fr))}dl.imp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Hintergrund-Varianten: Sternenhimmel und Zielcollage */
+:root[data-bg]{--bg:#07201F;--surface:rgba(12,34,33,.76);--line:rgba(255,255,255,.16);--ink:#EAF4F1;--muted:#A9C2BC;--warm:#F2B44B;--warm-soft:rgba(242,180,75,.18);--bad:#F08A7E;--bad-soft:rgba(240,138,126,.2);color-scheme:dark}
+:root[data-bg] body{background:#06191A}
+#bgl{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+:root[data-bg] #bgl{background:linear-gradient(180deg,#06191A 0%,#0A2B2B 46%,#11504A 82%,#2B6A57 100%)}
+:root[data-bg] section.panel,:root[data-bg] .day,:root[data-bg] nav.tabs{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.wrap{position:relative;z-index:1}
+#bgl .vb{border-radius:0;min-height:100%;background:none}
+#bgl .vb .vin{opacity:.3;filter:blur(1.5px)}
+/* Zielcollage: eigener, fester Look unabhängig vom Farbschema */
+.vb{position:relative;overflow:hidden;border-radius:20px;color:#EAF4F1;background:linear-gradient(180deg,#06191A 0%,#0A2B2B 46%,#11504A 82%,#2B6A57 100%);padding:clamp(18px,3.4vw,38px)}
+.vb::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-38%;height:62%;background:radial-gradient(ellipse at 50% 100%,rgba(242,180,75,.45),rgba(242,180,75,0) 62%);pointer-events:none}
+.stars{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.vin{position:relative;z-index:1;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))}
+.vhead{grid-column:1/-1;padding:4px 0 12px}
+.vk{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#8FE0D4}
+.vtitle{font-family:var(--display);font-weight:700;font-size:clamp(34px,8.2vw,76px);line-height:1;margin:8px 0 0;text-wrap:balance;max-width:14ch}
+.vtile{background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.vtile.hi{background:rgba(242,180,75,.11);border-color:rgba(242,180,75,.42)}
+.vrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.vbig{font-family:var(--display);font-weight:700;font-size:clamp(40px,7.4vw,62px);line-height:1;color:#F2B44B;font-variant-numeric:tabular-nums}
+.vh{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.15}
+.vs{color:#C5D9D4;font-size:14.5px;line-height:1.35}
+.vdate{margin-top:auto;padding-top:6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FE0D4}
+.vpill{display:inline-block;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 11px;font-weight:500;font-size:14px;margin:0 6px 6px 0}
+.vgrid{width:100%;height:auto;max-width:560px}
+.vstep{display:flex;gap:6px}
+.vstep button{width:34px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#EAF4F1;font-weight:700;font-size:16px;line-height:1}
+@media (min-width:640px){.vtile.w2{grid-column:span 2}}
+@media (max-width:899px){nav.tabs button{font-size:13px;padding:10px 0}}
 </style>
 </head>
 <body>
+<div id="bgl" aria-hidden="true"></div>
 <div class="wrap">
   <header class="top">
     <div>
@@ -195,7 +226,8 @@ dl.imp dd{margin:2px 0 0;max-width:68ch}
     <button type="button" role="tab" data-tab="woche">Woche</button>
     <button type="button" role="tab" data-tab="training">Training</button>
     <button type="button" role="tab" data-tab="aufgaben">Aufgaben</button>
-    <button type="button" role="tab" data-tab="einst" aria-label="Einstellungen" style="flex:0 0 52px">⚙︎</button>
+    <button type="button" role="tab" data-tab="ziele">Ziele</button>
+    <button type="button" role="tab" data-tab="einst" aria-label="Einstellungen" style="flex:0 0 40px">⚙︎</button>
   </nav>
   <div class="status" id="status" aria-live="polite"></div>
   <div class="banner" id="banner" hidden></div>
@@ -229,6 +261,15 @@ dl.imp dd{margin:2px 0 0;max-width:68ch}
       <div class="rowbtns"><button class="btn primary" type="submit">Speichern und verbinden</button><button class="btn" type="button" id="reload">Jetzt aktualisieren</button></div>
       <p class="sub" id="cfg-msg" style="margin-top:10px" aria-live="polite"></p>
     </form>
+    <h2 style="margin-top:20px">Darstellung</h2>
+    <p class="sub">Gilt nur für dieses Gerät.</p>
+    <h3>Farbschema</h3>
+    <div class="seg" id="ui-theme"><button type="button" data-ui="theme" data-v="auto">Automatisch</button><button type="button" data-ui="theme" data-v="light">Hell</button><button type="button" data-ui="theme" data-v="dark">Dunkel</button></div>
+    <h3>Akzentfarbe</h3>
+    <div class="seg" id="ui-accent"><button type="button" data-ui="accent" data-v="petrol">Petrol</button><button type="button" data-ui="accent" data-v="blue">Blau</button><button type="button" data-ui="accent" data-v="orange">Orange</button><button type="button" data-ui="accent" data-v="gray">Grau</button></div>
+    <h3>Hintergrund</h3>
+    <div class="seg" id="ui-bg"><button type="button" data-ui="bg" data-v="normal">Normal</button><button type="button" data-ui="bg" data-v="sky">Sternenhimmel</button><button type="button" data-ui="bg" data-v="collage">Zielcollage</button></div>
+    <div class="field"><label for="cfg-motto">Leitsatz der Zielcollage</label><input type="text" id="cfg-motto" maxlength="120" autocomplete="off" placeholder="leer = Standard aus dem Plan"></div>
     <h2 style="margin-top:20px">Wetter-Ort</h2>
     <p class="sub" id="loc-cur"></p>
     <form class="add" id="locform">
@@ -393,6 +434,43 @@ function renderFocus(){const el=$("focus"),show=(S.tab==="heute"||S.tab==="woche
   [["g-week",WKEY],["g-month",MKEY]].forEach(p=>{const g=S.goals[p[1]]||{},t=$(p[0]);if(document.activeElement!==t)t.value=g.text||"";$(p[0]+"-d").checked=!!g.done})}
 function saveGoal(id,k){const text=$(id).value.trim(),done=$(id+"-d").checked&&!!text;S.goals[k]={text:text,done:done};push({t:"goal",key:k,text:text,done:done});renderFocus()}
 
+/* ---------- Zielcollage: Inhalte kommen aus dem Plan, hier nur die Darstellung ---------- */
+const VART={
+ pulse:'<svg width="170" height="44" viewBox="0 0 170 44" fill="none" stroke="#8FE0D4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M2 26 H40 L50 8 L62 40 L72 18 L80 26 H112 L120 14 L128 32 L134 26 H168"/></svg>',
+ wave:'<svg width="150" height="62" viewBox="0 0 150 62" fill="none" stroke="#8FE0D4" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="112" cy="20" r="13" stroke="#F2B44B"/><path d="M4 44 q12 -10 24 0 t24 0 t24 0 t24 0 t24 0 t22 0"/><path d="M4 56 q12 -10 24 0 t24 0 t24 0 t24 0 t24 0 t22 0" opacity=".5"/></svg>',
+ people:'<svg width="120" height="56" viewBox="0 0 120 56" fill="none" stroke="#8FE0D4" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="34" cy="16" r="9"/><path d="M16 52 q0 -22 18 -22 t18 22"/><circle cx="74" cy="16" r="9"/><path d="M56 52 q0 -22 18 -22 t18 22"/><circle cx="103" cy="30" r="6" stroke="#F2B44B"/><path d="M92 52 q0 -13 11 -13 t11 13" stroke="#F2B44B"/></svg>',
+ watch:'<svg width="60" height="86" viewBox="0 0 70 100" fill="none" stroke="#F2B44B" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M22 22 L26 4 H44 L48 22 M22 78 L26 96 H44 L48 78" opacity=".7"/><circle cx="35" cy="50" r="28"/><circle cx="35" cy="50" r="22" opacity=".45"/><path d="M35 50 V34 M35 50 L46 56"/></svg>'};
+function vStars(n){let x=7,o="";const r=()=>{x=(x*16807)%2147483647;return x/2147483647};for(let i=0;i<n;i++){const cx=(r()*100).toFixed(1),cy=(Math.pow(r(),1.6)*80).toFixed(1),rad=[0.8,0.8,1.1,1.1,1.5,2][Math.floor(r()*6)];o+='<circle cx="'+cx+'%" cy="'+cy+'%" r="'+rad+'" fill="#fff" opacity="'+(0.35+r()*0.6).toFixed(2)+'"/>'}return '<svg class="stars" aria-hidden="true">'+o+'</svg>'}
+function vGrid(kind,done,total){if(kind==="houses"){const cols=10,rows=Math.ceil(total/cols);let o="";for(let i=0;i<total;i++){const on=i<done;o+='<g transform="translate('+(i%cols)*31+','+Math.floor(i/cols)*31+')"><path d="M2 12 L12 3 L22 12 V23 H2 Z" fill="'+(on?"#F2B44B":"none")+'" stroke="'+(on?"#F2B44B":"rgba(255,255,255,.42)")+'" stroke-width="1.6" stroke-linejoin="round"/><rect x="9.5" y="15" width="5" height="8" fill="'+(on?"#0B2A29":"none")+'" stroke="'+(on?"none":"rgba(255,255,255,.3)")+'" stroke-width="1.2"/></g>'}return '<svg class="vgrid" viewBox="0 0 '+(cols*31-7)+' '+(rows*31-6)+'" aria-hidden="true">'+o+'</svg>'}
+  if(kind==="dots"){const cols=28,rows=Math.ceil(total/cols);let o="";for(let i=0;i<total;i++){const on=i<done;o+='<circle cx="'+((i%cols)*14+5)+'" cy="'+(Math.floor(i/cols)*14+5)+'" r="'+(on?4.2:3.4)+'" fill="'+(on?"#F2B44B":"rgba(255,255,255,.2)")+'"/>'}return '<svg class="vgrid" viewBox="0 0 '+(cols*14-4)+' '+(rows*14-4)+'" aria-hidden="true">'+o+'</svg>'}
+  return""}
+function vDone(t){const g=S.goals["P:"+t.id];if(g&&g.text!==""&&g.text!=null&&!isNaN(Number(g.text)))return Math.max(0,Math.min(t.progress.total,Number(g.text)));return t.progress.done||0}
+const vMotto=()=>{const V=PLAN&&PLAN.vision,g=S.goals["S:motto"];return (g&&g.text)||(V&&V.title)||""};
+function viewVision(edit){const V=PLAN&&PLAN.vision;if(!V||!V.tiles)return edit?'<section class="panel"><p class="empty">Die Zielcollage wird nach dem Verbinden geladen.</p></section>':"";
+  let h='<div class="vb">'+vStars(170)+'<div class="vin"><div class="vhead"><div class="vk">'+esc(V.kicker||"")+'</div><div class="vtitle">'+esc(vMotto())+'</div></div>';
+  V.tiles.forEach(t=>{const p=t.progress,n=p?vDone(t):0;let date=t.dateText||"";
+    if(t.until){const left=diff(fromKey(t.until),TODAY);date+=(date?" · ":"")+(left>0?"noch "+left+(left===1?" Tag":" Tage"):left===0?"heute":"Zieldatum erreicht")}
+    h+='<div class="vtile'+(t.hi?" hi":"")+(t.w2?" w2":"")+'"><div class="vk">'+esc(t.k||"")+'</div>'+(t.art&&VART[t.art]?VART[t.art]:"");
+    if(t.big)h+='<div class="vrow"><div class="vbig">'+esc(t.big)+'</div><div class="vh" style="padding-bottom:5px">'+esc(t.h||"")+'</div></div>';else if(t.h)h+='<div class="vh">'+esc(t.h)+'</div>';
+    if(t.pills)h+='<div>'+t.pills.map(x=>'<span class="vpill">'+esc(x)+'</span>').join("")+'</div>';
+    if(p){h+=vGrid(p.kind,n,p.total)+'<div class="vrow" style="align-items:center;justify-content:space-between"><div class="vs">'+esc(String(p.text||"{n} von {total}").replace("{n}",n).replace("{total}",p.total).replace("{rest}",p.total-n))+'</div>'+(edit?'<div class="vstep"><button type="button" data-vstep="'+esc(t.id)+'" data-d="-1" aria-label="Einen weniger">−</button><button type="button" data-vstep="'+esc(t.id)+'" data-d="1" aria-label="Einen mehr">+</button></div>':"")+'</div>'}
+    if(t.s)h+='<div class="vs">'+esc(t.s)+'</div>';
+    h+='<div class="vdate">'+esc(date)+'</div></div>'});
+  return h+'</div></div>'}
+
+/* ---------- Darstellung: Farbschema, Akzent, Hintergrund (pro Gerät) ---------- */
+const ACC={petrol:{l:["#0F6F66","#DCEFEA","#FFFFFF"],d:["#5CC9BB","#17332F","#08201C"]},blue:{l:["#1D5FBF","#DCE8FA","#FFFFFF"],d:["#7FB0FF","#172A45","#06162B"]},orange:{l:["#B4530A","#FBE9D7","#FFFFFF"],d:["#F2A057","#3B2612","#2A1403"]},gray:{l:["#3F4A52","#E4E8EB","#FFFFFF"],d:["#B9C4CB","#273036","#11171B"]}};
+function LSUI(){try{return JSON.parse(localStorage.getItem("dash.ui")||"{}")||{}}catch(e){return{}}}
+let UI=Object.assign({theme:"auto",accent:"petrol",bg:"normal"},LSUI());
+const MQ=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
+function applyUi(){const R=document.documentElement,bg=UI.bg==="sky"||UI.bg==="collage"?UI.bg:"";
+  if(bg){R.dataset.bg=bg;R.dataset.theme="dark"}else{delete R.dataset.bg;if(UI.theme==="light"||UI.theme==="dark")R.dataset.theme=UI.theme;else delete R.dataset.theme}
+  const dark=bg?true:UI.theme==="dark"?true:UI.theme==="light"?false:!!(MQ&&MQ.matches),a=(ACC[UI.accent]||ACC.petrol)[dark?"d":"l"];
+  R.style.setProperty("--accent",a[0]);R.style.setProperty("--accent-soft",bg?"rgba(255,255,255,.12)":a[1]);R.style.setProperty("--on-accent",a[2]);
+  $("bgl").innerHTML=bg==="collage"?viewVision(false):bg==="sky"?vStars(200):"";
+  document.querySelectorAll("[data-ui]").forEach(b=>b.setAttribute("aria-pressed",String(UI[b.dataset.ui]===b.dataset.v)))}
+if(MQ&&MQ.addEventListener)MQ.addEventListener("change",()=>applyUi());
+
 /* ---------- Überblick: Wetter und WHOOP ---------- */
 const WMO=c=>c===0?"klar":c<=2?"leicht bewölkt":c===3?"bedeckt":c<=48?"Nebel":c<=57?"Nieselregen":c<=67?"Regen":c<=77?"Schnee":c<=82?"Schauer":c<=86?"Schneeschauer":"Gewitter";
 const uvText=u=>u<3?"niedrig":u<6?"mittel":u<8?"hoch":u<11?"sehr hoch":"extrem";
@@ -535,17 +613,20 @@ function render(force){
   else if(S.tab==="training"){const x=PLAN&&units().length?getLive():null,u=x?unitById(x.unit):null;
     if(S.trSub==="einheit"&&u){$("kicker").textContent="Einheit "+(x.n+1)+" · "+(x.virtual?"als Nächstes":"läuft seit "+fmtDay(x.date));$("title").textContent=u.name}
     else{$("kicker").textContent=tTitle();$("title").textContent=(SUBS.find(q=>q[0]===S.trSub)||SUBS[0])[1]}}
-  else{$("kicker").textContent="Verbindung";$("title").textContent="Einstellungen"}
+  else if(S.tab==="ziele"){$("kicker").textContent="Zielcollage";$("title").textContent="Ziele"}
+  else{$("kicker").textContent="Verbindung und Darstellung";$("title").textContent="Einstellungen"}
   $("daynav").hidden=S.tab!=="heute";
-  $("addpanel").hidden=S.tab==="woche"||S.tab==="einst"||S.tab==="training";$("setpanel").hidden=S.tab!=="einst";
+  $("addpanel").hidden=S.tab==="woche"||S.tab==="einst"||S.tab==="training"||S.tab==="ziele";$("setpanel").hidden=S.tab!=="einst";
   const c=[];
   if(PLAN&&(S.tab==="heute"||S.tab==="woche")){const lb=phaseLabel(S.tab==="heute"?d:TODAY);if(lb)c.push('<span class="chip">'+esc(lb)+'</span>');
+    const vc=PLAN.vision&&PLAN.vision.countdown;if(vc&&vc.until){const n=diff(fromKey(vc.until),TODAY);if(n>0)c.push('<span class="chip">'+esc(vc.label)+': noch <b>'+n+'</b> '+(n===1?"Tag":"Tage")+'</span>')}
     const cd=PLAN.countdown;if(cd&&cd.from){const n=diff(fromKey(cd.from),TODAY);
       if(n>0)c.push('<span class="chip warm">'+esc(cd.label)+' in <b>'+n+'</b> '+(n===1?"Tag":"Tagen")+'</span>');
       else if(cd.to&&key(TODAY)<=cd.to)c.push('<span class="chip warm">'+esc(cd.label)+' bis '+short(fromKey(cd.to))+'</span>')}}
   $("chips").innerHTML=c.join("");
-  $("main").innerHTML=S.tab==="heute"?viewDay():S.tab==="woche"?viewWeek():S.tab==="aufgaben"?viewTasks():S.tab==="training"?viewTraining():"";
-  if(S.tab==="einst")showLoc();
+  $("main").innerHTML=S.tab==="heute"?viewDay():S.tab==="woche"?viewWeek():S.tab==="aufgaben"?viewTasks():S.tab==="training"?viewTraining():S.tab==="ziele"?viewVision(true):"";
+  if(S.tab==="einst"){showLoc();const m=$("cfg-motto"),g=S.goals["S:motto"];if(document.activeElement!==m)m.value=(g&&g.text)||""}
+  if(UI.bg==="collage")$("bgl").innerHTML=viewVision(false);
   renderFocus();
   renderStatus();
 }
@@ -634,6 +715,8 @@ $("main").addEventListener("input",e=>{const t=e.target;if(t.id&&/^(kg|rp)-/.tes
 $("main").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input.num")){const ins=[].slice.call(document.querySelectorAll("#main input.num")),i=ins.indexOf(e.target);if(ins[i+1]){e.preventDefault();ins[i+1].focus()}}});
 $("main").addEventListener("toggle",e=>{const d=e.target.closest&&e.target.closest("details[data-hist]");if(d)S.openHist=d.open?d.dataset.hist:null},true);
 [["g-week",WKEY],["g-month",MKEY]].forEach(p=>{$(p[0]).addEventListener("change",()=>saveGoal(p[0],p[1]));$(p[0]+"-d").addEventListener("change",()=>saveGoal(p[0],p[1]));$(p[0]).addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur()})});
+$("setpanel").addEventListener("click",e=>{const b=e.target.closest("button[data-ui]");if(!b)return;UI[b.dataset.ui]=b.dataset.v;try{localStorage.setItem("dash.ui",JSON.stringify(UI))}catch(err){}applyUi()});
+$("cfg-motto").addEventListener("change",e=>{const text=e.target.value.trim();S.goals["S:motto"]={text:text,done:false};push({t:"goal",key:"S:motto",text:text,done:false});render(true)});
 $("tMinus").onclick=()=>{timerEnd-=15000;tick()};$("tPlus").onclick=()=>{timerEnd+=15000;tick()};$("tStop").onclick=stopTimer;
 let delArmed=null;
 $("main").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const ds=b.dataset;
@@ -642,6 +725,7 @@ $("main").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)
   else if(ds.del){if(delArmed===ds.del){delArmed=null;taskDel(ds.del)}else{delArmed=ds.del;b.textContent="Wirklich löschen?"}}
   else if(ds.open){S.day=fromKey(ds.open);S.tab="heute";render();window.scrollTo(0,0)}
   else if(ds.week!==undefined&&ds.week!==""){S.week=ds.week==="0"?monday(TODAY):add(S.week,7*Number(ds.week));ensureRange()}
+  else if(ds.vstep){const V=PLAN&&PLAN.vision,t=V&&V.tiles.find(x=>x.id===ds.vstep);if(!t||!t.progress)return;const n=Math.max(0,Math.min(t.progress.total,vDone(t)+Number(ds.d)));S.goals["P:"+t.id]={text:String(n),done:false};push({t:"goal",key:"P:"+t.id,text:String(n),done:false});render(true)}
   else if(ds.gotrain!==undefined){if(ds.gotrain)S.pickUnit=ds.gotrain;S.tab="training";S.trSub="einheit";render(true);window.scrollTo(0,0)}
   else if(ds.goloc){S.tab="einst";render(true);showLoc();$("loc-q").focus()}
   else if(ds.trsub){S.trSub=ds.trsub;render(true);window.scrollTo(0,0)}
@@ -669,7 +753,7 @@ $("reload").addEventListener("click",()=>load());
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")return;if(+day0(new Date())!==+TODAY){location.reload();return}if(Date.now()-lastLoad>120000)load();else flush()});
 window.addEventListener("online",()=>{flush().then(()=>{if(Date.now()-lastLoad>120000)load()})});
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
-render();load();loadWx();
+applyUi();render();load();loadWx();
 })();
 </script>
 </body>
