@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<meta name="theme-color" content="#F2F5F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1614" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: eine Spalte am Handy, feste Tableiste unten; ab 900px zwei Spalten (Tag links, Routinen rechts), Woche als 7er-Raster */
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --ink:#13231F; --muted:#5B6B66; --line:#DCE4E0;
+  --accent:#0F6F66; --accent-soft:#DCEFEA; --on-accent:#FFFFFF;
+  --warm:#9A5C08; --warm-soft:#FBEFD9; --bad:#B3362B; --bad-soft:#FADFDB;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1614; --surface:#16211E; --ink:#E7EFEC; --muted:#93A6A0; --line:#27362F;
+  --accent:#5CC9BB; --accent-soft:#17332F; --on-accent:#08201C;
+  --warm:#E5B15A; --warm-soft:#3A2D14; --bad:#F08A7E; --bad-soft:#40201C; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E1614; --surface:#16211E; --ink:#E7EFEC; --muted:#93A6A0; --line:#27362F;
+  --accent:#5CC9BB; --accent-soft:#17332F; --on-accent:#08201C;
+  --warm:#E5B15A; --warm-soft:#3A2D14; --bad:#F08A7E; --bad-soft:#40201C; color-scheme:dark }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px);background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 96px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 18px;margin-bottom:14px}
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,6vw,38px);line-height:1.05;margin:2px 0 0;text-wrap:balance}
+.daynav{display:flex;gap:6px;margin-left:auto}
+.daynav button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;min-width:42px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 11px;font-size:13px;background:var(--accent-soft);color:var(--ink)}
+.chip.warm{background:var(--warm-soft)}
+.chip b{font-weight:600}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{flex:1;border:0;background:none;padding:10px 6px;border-radius:10px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink)}
+.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+h2{font-family:var(--display);font-weight:700;font-size:19px;margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2 small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted)}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 8px}
+h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:12px 0 2px}
+ul.rows{list-style:none;margin:6px 0 0;padding:0}
+ul.rows>li{border-top:1px solid var(--line);padding:9px 0;display:flex;gap:10px;align-items:flex-start;min-width:0}
+ul.rows>li:first-child{border-top:0}
+.time{font-variant-numeric:tabular-nums;color:var(--muted);min-width:92px;font-size:14px;padding-top:1px}
+.past{opacity:.5}
+.grow{flex:1;min-width:0;overflow-wrap:anywhere}
+.note{color:var(--muted);font-size:13px}
+label.chk{display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0;cursor:pointer}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);background:var(--surface);margin:0;display:grid;place-content:center;cursor:pointer}
+input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+input[type=checkbox]:checked::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--on-accent);border-bottom:2.5px solid var(--on-accent);transform:rotate(-45deg) translate(1px,-1px)}
+input[type=checkbox]:checked+.grow .ttl{text-decoration:line-through;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;border-radius:6px;padding:1px 7px;background:var(--accent-soft);margin-left:6px;white-space:nowrap}
+.tag.warm{background:var(--warm-soft);color:var(--warm)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.plain{background:none;border:1px solid var(--line);color:var(--muted)}
+.pause{color:var(--muted);font-style:italic}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--accent);font-weight:500;font-size:14px}
+table.ex{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px}
+table.ex td{border-top:1px solid var(--line);padding:5px 0}
+table.ex td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;padding-left:10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.danger{color:var(--bad)}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.iconbtn{border:0;background:none;color:var(--muted);padding:2px 6px;border-radius:8px;font-size:18px;line-height:1}
+form.add{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+form.add input[type=text]{flex:1 1 200px;min-width:0}
+form.add input,form.add select,.edit input,.edit select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 10px}
+.edit{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.banner{border-radius:12px;padding:9px 12px;background:var(--warm-soft);font-size:14px;margin-bottom:14px}
+.week{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.day.today{border-color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.day button.dhead{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:8px;width:100%;font-family:var(--display);font-weight:700;font-size:17px}
+.day button.dhead span{font-family:var(--body);font-weight:400;font-size:13px;color:var(--muted)}
+.day .line{font-size:13.5px;margin-top:6px;overflow-wrap:anywhere}
+.day .line .t{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.day .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:10px}
+.weeknav{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.empty{color:var(--muted);padding:8px 0}
+@media (min-width:900px){
+  .wrap{padding-block:26px 40px}
+  nav.tabs{position:static;border:1px solid var(--line);border-radius:12px;padding:4px;display:inline-flex;margin-bottom:16px}
+  nav.tabs button{padding:8px 18px}
+  .grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  .week{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .day{padding:10px}
+}
+@media (prefers-reduced-motion:no-preference){ input[type=checkbox]{transition:background .12s,border-color .12s} }
+
+[hidden]{display:none!important}
+.status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin:-6px 0 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:var(--accent)} .dot.wait{background:var(--warm)} .dot.bad{background:var(--bad)}
+.field{display:grid;gap:4px;margin-top:10px}
+.field label{font-size:13px;color:var(--muted)}
+.field input{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 10px;width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="kicker" id="kicker"></div>
+      <h1 id="title">Dashboard</h1>
+    </div>
+    <div class="daynav" id="daynav">
+      <button type="button" data-act="prev" aria-label="Zurück">‹</button>
+      <button type="button" data-act="today">Heute</button>
+      <button type="button" data-act="next" aria-label="Weiter">›</button>
+    </div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Ansicht">
+    <button type="button" role="tab" data-tab="heute">Heute</button>
+    <button type="button" role="tab" data-tab="woche">Woche</button>
+    <button type="button" role="tab" data-tab="aufgaben">Aufgaben</button>
+    <button type="button" role="tab" data-tab="einst" aria-label="Einstellungen" style="flex:0 0 52px">⚙︎</button>
+  </nav>
+  <div class="status" id="status" aria-live="polite"></div>
+  <div class="banner" id="banner" hidden></div>
+  <div class="chips" id="chips"></div>
+  <main id="main"></main>
+  <section class="panel" id="addpanel" style="margin-top:16px">
+    <h2>Neue Aufgabe</h2>
+    <form class="add" id="addform">
+      <input type="text" id="add-title" placeholder="Was steht an?" maxlength="200" required aria-label="Aufgabe">
+      <input type="date" id="add-due" aria-label="Fällig am">
+      <select id="add-area" aria-label="Bereich">
+        <option>Privat</option><option>Beruf</option><option>Gewerbe</option><option>Immobilien</option>
+      </select>
+      <button class="btn primary" type="submit">Hinzufügen</button>
+    </form>
+  </section>
+  <section class="panel" id="setpanel" hidden>
+    <h2>Verbindung zum Google Sheet</h2>
+    <p class="sub">Web-App-URL und Token aus dem Apps Script im Sheet „Dashboard". Beides wird nur auf diesem Gerät gespeichert.</p>
+    <form id="cfgform">
+      <div class="field"><label for="cfg-url">Web-App-URL (endet auf /exec)</label><input type="url" id="cfg-url" autocomplete="off" autocapitalize="off" spellcheck="false" required></div>
+      <div class="field"><label for="cfg-token">Token</label><input type="text" id="cfg-token" autocomplete="off" autocapitalize="off" spellcheck="false" required></div>
+      <div class="rowbtns"><button class="btn primary" type="submit">Speichern und verbinden</button><button class="btn" type="button" id="reload">Jetzt aktualisieren</button></div>
+      <p class="sub" id="cfg-msg" style="margin-top:10px" aria-live="polite"></p>
+    </form>
+  </section>
+</div>
+<script>
+(function(){
+"use strict";
+/* ---------- Datum ---------- */
+const DAY=86400000, WD=["So","Mo","Di","Mi","Do","Fr","Sa"], WDL=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const MON=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const mk=(y,m,d)=>new Date(y,m-1,d);
+const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const key=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const fromKey=k=>{const p=k.split("-").map(Number);return mk(p[0],p[1],p[2])};
+const add=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const diff=(a,b)=>Math.round((day0(a)-day0(b))/DAY);
+const monday=d=>add(d,-((d.getDay()+6)%7));
+const short=d=>d.getDate()+"."+(d.getMonth()+1)+".";
+const hm=d=>String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+function kw(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-n+3);const f=new Date(Date.UTC(t.getUTCFullYear(),0,4));return 1+Math.round(((t-f)/DAY-3+((f.getUTCDay()+6)%7))/7)}
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- Plan: kommt aus dem Google Sheet, hier steht nur die Auswertung ---------- */
+let PLAN=null;
+function training(d){const T=PLAN&&PLAN.training;if(!T||!T.cycle||!T.cycle.length||!T.start)return null;const n=diff(d,fromKey(T.start))-S.shift;if(n<0)return null;return T.cycle[n%T.cycle.length]}
+function phase(d){const ph=(PLAN&&PLAN.routine&&PLAN.routine.phases)||[],k=key(d);let cur=null;ph.forEach(p=>{if(p.from<=k)cur=p});return cur}
+function ruleOn(r,d,p){const k=key(d);
+  if(r.days&&r.days.indexOf(d.getDay())<0)return false;
+  if(r.phases&&(!p||r.phases.indexOf(p.id)<0))return false;
+  if(r.notPhases&&p&&r.notPhases.indexOf(p.id)>=0)return false;
+  if(r.first&&d.getDate()>7)return false;
+  if(r.from&&k<r.from)return false;
+  if(r.every){if(!p)return false;const n=diff(d,fromKey(p.from));if(((n%r.every)+r.every)%r.every!==(r.offset||0))return false}
+  return true}
+function skincare(d){const R=PLAN&&PLAN.routine;if(!R)return[];const p=phase(d),L=[];
+  (R.items||[]).forEach(r=>{if(!ruleOn(r,d,p))return;
+    if(r.ifMissing){if(!L.some(x=>x.id===r.ifMissing)&&!L.some(x=>x.info&&x.g===r.g))L.push({g:r.g,info:r.info,s:r.s||r.info});return}
+    if(L.some(x=>x.id===r.id))return;
+    L.push({g:r.g,id:r.id,t:r.t,s:r.s||r.t,n:r.n||"",opt:r.opt,strength:r.strength,hideWeek:r.hideWeek})});
+  return L}
+const phaseLabel=d=>{const p=phase(d);return p?p.label:""};
+const tTitle=()=>(PLAN&&PLAN.training&&PLAN.training.title)||"Plan";
+const rTitle=()=>(PLAN&&PLAN.routine&&PLAN.routine.title)||"Routine";
+
+/* ---------- Zustand ---------- */
+const TODAY=day0(new Date());
+const S={tab:"heute",day:TODAY,week:monday(TODAY),tasks:[],checks:{},events:null,evStamp:null,evMsg:"",shift:0,openTask:null,showDone:false,sync:"",syncErr:"",stampMs:0};
+const $=id=>document.getElementById(id);
+let localId=0;
+
+/* ---------- Termine ---------- */
+function normEvents(list){return (list||[]).map(e=>e.allDay&&e.sk?{title:e.title,allDay:true,s:+fromKey(e.sk),e:+fromKey(e.ek||e.sk),loc:e.loc||""}:{title:e.title,allDay:!!e.allDay,s:e.s,e:e.e,loc:e.loc||""}).filter(e=>!isNaN(e.s)).sort((a,b)=>a.s-b.s)}
+function eventsOn(d){if(!S.events)return[];const a=+d,b=+add(d,1);return S.events.filter(e=>e.s<b&&(e.e>a||e.s>=a))}
+function evTime(e,d){if(e.allDay)return"ganztägig";const s=new Date(e.s),en=new Date(e.e);return (+day0(s)===+d?hm(s):"…")+"–"+(+day0(en)===+d?hm(en):"…")}
+
+/* ---------- Aufgaben ---------- */
+const openTasks=()=>S.tasks.filter(t=>!t.done);
+function tasksFor(d){const k=key(d);return openTasks().filter(t=>t.due===k)}
+function overdue(){const k=key(TODAY);return openTasks().filter(t=>t.due&&t.due<k).sort((a,b)=>a.due<b.due?-1:1)}
+function taskRow(t,ctx){const k=key(TODAY);let tag="";
+  if(t.due){const d=fromKey(t.due);if(!t.done&&t.due<k)tag='<span class="tag bad">überfällig seit '+short(d)+'</span>';else if(ctx!=="day")tag='<span class="tag plain">'+WD[d.getDay()]+" "+short(d)+'</span>'}
+  const open=S.openTask===t.id;
+  return '<li><div class="grow"><div style="display:flex;gap:10px;align-items:flex-start"><label class="chk"><input type="checkbox" id="task-'+esc(t.id)+'" data-task="'+esc(t.id)+'"'+(t.done?" checked":"")+'><span class="grow"><span class="ttl">'+esc(t.title)+'</span><span class="tag">'+esc(t.area||"Privat")+'</span>'+tag+'</span></label><button type="button" class="iconbtn" data-edit="'+esc(t.id)+'" aria-label="Aufgabe bearbeiten" aria-expanded="'+open+'">⋯</button></div>'+
+   (open?'<div class="edit"><input type="date" id="due-'+esc(t.id)+'" value="'+esc(t.due||"")+'" data-due="'+esc(t.id)+'" aria-label="Fällig am"><button type="button" class="btn" data-move="'+esc(t.id)+'" data-to="'+key(TODAY)+'">Heute</button><button type="button" class="btn" data-move="'+esc(t.id)+'" data-to="'+key(add(TODAY,1))+'">Morgen</button><button type="button" class="btn" data-move="'+esc(t.id)+'" data-to="">Ohne Datum</button><button type="button" class="btn danger" data-del="'+esc(t.id)+'">Löschen</button></div>':"")+'</div></li>'}
+
+/* ---------- Abhaken ---------- */
+const done=(k,id)=>!!(S.checks[k]&&S.checks[k].done&&S.checks[k].done[id]);
+function chkRow(k,it){return '<li><label class="chk"><input type="checkbox" id="c-'+k+"-"+it.id+'" data-chk="'+it.id+'" data-day="'+k+'"'+(it.strength?' data-strength="'+esc(it.strength)+'"':"")+(done(k,it.id)?" checked":"")+'><span class="grow"><span class="ttl">'+esc(it.t)+'</span>'+(it.opt?'<span class="tag plain">optional</span>':"")+(it.n?'<div class="note">'+esc(it.n)+'</div>':"")+'</span></label></li>'}
+
+/* ---------- Ansichten ---------- */
+function viewDay(){const d=S.day,k=key(d),isToday=+d===+TODAY,now=Date.now();
+  const ev=eventsOn(d);
+  let h='<div class="grid two"><div class="grid">';
+  h+='<section class="panel"><h2>Termine <small>'+(S.evStamp?"Stand "+S.evStamp:"")+'</small></h2>';
+  if(S.evMsg)h+='<p class="sub">'+esc(S.evMsg)+'</p>';
+  if(S.events===null)h+='<p class="empty">'+(CFG.url?"Kalender wird geladen …":"Noch nicht verbunden. Unter ⚙︎ die Web-App-URL und das Token eintragen.")+'</p>';
+  else if(!ev.length)h+='<p class="empty">Keine Termine an diesem Tag.</p>';
+  else h+='<ul class="rows">'+ev.map(e=>'<li class="'+(isToday&&!e.allDay&&e.e<now?"past":"")+'"><span class="time">'+evTime(e,d)+'</span><span class="grow">'+esc(e.title)+(e.loc?'<div class="note">'+esc(e.loc)+'</div>':"")+'</span></li>').join("")+'</ul>';
+  h+='</section>';
+  const od=isToday?overdue():[],td=tasksFor(d),nodate=openTasks().filter(t=>!t.due);
+  h+='<section class="panel"><h2>Aufgaben <small>'+(od.length+td.length)+' offen</small></h2>';
+  if(!od.length&&!td.length)h+='<p class="empty">'+(isToday?"Für heute ist nichts fällig.":"An diesem Tag ist nichts fällig.")+'</p>';
+  else h+='<ul class="rows">'+od.map(t=>taskRow(t,"day")).join("")+td.map(t=>taskRow(t,"day")).join("")+'</ul>';
+  if(isToday&&nodate.length)h+='<details><summary>'+nodate.length+' ohne Datum</summary><ul class="rows">'+nodate.map(t=>taskRow(t,"day")).join("")+'</ul></details>';
+  h+='</section></div><div class="grid">';
+  const t=training(d);
+  h+='<section class="panel"><h2>'+esc(tTitle());
+  if(!PLAN)h+='</h2><p class="empty">Der Plan wird nach dem Verbinden geladen.</p>';
+  else if(!t)h+='</h2><p class="empty">Für diesen Tag ist nichts geplant.</p>';
+  else{h+=' <small>'+esc(t.sub)+'</small></h2><ul class="rows">';
+    if(t.gym)h+=chkRow(k,{id:"gym",t:t.name,n:PLAN.training.gymNote||"",strength:t.name});else h+='<li><span class="pause">Pausentag, kein Gym</span></li>';
+    if(t.cardio)h+=chkRow(k,{id:"cardio",t:"Cardio",n:t.cardio,opt:t.cardioOpt,strength:t.cardioShort||"x"});
+    h+='</ul>';
+    if(t.ex)h+='<details><summary>Übungen ansehen</summary><table class="ex">'+t.ex.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+esc(x[1])+'</td></tr>').join("")+'</table></details>';
+    h+='<div class="rowbtns"><button type="button" class="btn" data-shift="1">Plan einen Tag nach hinten</button>'+(S.shift?'<button type="button" class="btn" data-shift="-1">Einen Tag zurück</button><span class="note" style="align-self:center">verschoben um '+S.shift+(Math.abs(S.shift)===1?" Tag":" Tage")+'</span>':"")+'</div>'}
+  h+='</section>';
+  const sk=skincare(d),chk=sk.filter(i=>i.id&&!i.opt),n=chk.filter(i=>done(k,i.id)).length;
+  h+='<section class="panel"><h2>'+esc(rTitle())+' <small>'+n+' von '+chk.length+' erledigt</small></h2><p class="sub">'+esc(phaseLabel(d))+'</p>';
+  if(!PLAN)h+='<p class="empty">Der Plan wird nach dem Verbinden geladen.</p>';
+  let g="";sk.forEach(i=>{if(i.g!==g){if(g)h+='</ul>';g=i.g;h+='<h3>'+g+'</h3><ul class="rows">'}h+=i.info?'<li><span class="pause">'+esc(i.info)+'</span></li>':chkRow(k,i)});
+  h+='</ul></section></div></div>';return h}
+
+function viewWeek(){let h='<div class="weeknav"><button type="button" class="btn" data-week="-1" aria-label="Vorherige Woche">‹</button><strong>KW '+kw(S.week)+' · '+short(S.week)+' bis '+short(add(S.week,6))+'</strong><button type="button" class="btn" data-week="1" aria-label="Nächste Woche">›</button><button type="button" class="btn" data-week="0">Diese Woche</button></div><div class="week">';
+  for(let i=0;i<7;i++){const d=add(S.week,i),k=key(d),ev=eventsOn(d),t=training(d),sk=skincare(d),tk=tasksFor(d);
+    h+='<div class="day'+(+d===+TODAY?" today":"")+'"><button type="button" class="dhead" data-open="'+k+'">'+WD[d.getDay()]+" "+short(d)+'<span>öffnen</span></button>';
+    h+='<div class="lbl">Termine</div>'+(ev.length?ev.map(e=>'<div class="line"><span class="t">'+(e.allDay?"ganzt.":hm(new Date(e.s)))+'</span>'+esc(e.title)+'</div>').join(""):'<div class="line note">'+(S.events===null?"–":"keine")+'</div>');
+    h+='<div class="lbl">'+esc(tTitle())+'</div><div class="line">'+(t?(t.gym?(done(k,"gym")?"✓ ":"")+esc(t.name):'<span class="pause">Pause</span>')+(t.cardio?'<div class="note">'+esc(t.cardioWeek||t.cardioShort||"")+'</div>':""):"–")+'</div>';
+    h+='<div class="lbl">'+esc(rTitle())+'</div><div class="line">'+sk.filter(x=>!x.hideWeek).map(x=>x.info?'<span class="pause">'+esc(x.s)+'</span>':(done(k,x.id)?"✓ ":"")+esc(x.s)+(x.opt?" (opt.)":"")).join('<br>')+'</div>';
+    if(tk.length)h+='<div class="lbl">Aufgaben</div>'+tk.map(x=>'<div class="line">'+esc(x.title)+'</div>').join("");
+    h+='</div>'}
+  return h+'</div>'}
+
+function viewTasks(){const k=key(TODAY),wk=key(add(monday(TODAY),6)),o=openTasks(),by=(a,b)=>(a.due||"9")<(b.due||"9")?-1:1;
+  const groups=[["Überfällig",o.filter(t=>t.due&&t.due<k)],["Heute",o.filter(t=>t.due===k)],["Diese Woche",o.filter(t=>t.due>k&&t.due<=wk)],["Später",o.filter(t=>t.due>wk)],["Ohne Datum",o.filter(t=>!t.due)]];
+  let h='<section class="panel"><h2>Alle Aufgaben <small>'+o.length+' offen</small></h2>';
+  if(!o.length)h+='<p class="empty">Keine offenen Aufgaben. Unten kannst du eine anlegen.</p>';
+  groups.forEach(g=>{if(g[1].length)h+='<h3>'+g[0]+'</h3><ul class="rows">'+g[1].sort(by).map(t=>taskRow(t,"list")).join("")+'</ul>'});
+  const dn=S.tasks.filter(t=>t.done).sort((a,b)=>String(b.doneAt||"")<String(a.doneAt||"")?-1:1);
+  if(dn.length)h+='<div class="rowbtns"><button type="button" class="btn" data-toggledone="1">'+(S.showDone?"Erledigte ausblenden":dn.length+" erledigte anzeigen")+'</button></div>'+(S.showDone?'<ul class="rows">'+dn.slice(0,30).map(t=>taskRow(t,"list")).join("")+'</ul>':"");
+  return h+'</section>'}
+
+function render(){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===S.tab)));
+  const d=S.day;
+  if(S.tab==="heute"){$("kicker").textContent=(+d===+TODAY?"Heute":diff(d,TODAY)===1?"Morgen":diff(d,TODAY)===-1?"Gestern":"Tagesansicht")+" · KW "+kw(d);$("title").textContent=WDL[d.getDay()]+", "+d.getDate()+". "+MON[d.getMonth()]}
+  else if(S.tab==="woche"){$("kicker").textContent="Wochenübersicht";$("title").textContent="Woche "+kw(S.week)}
+  else if(S.tab==="aufgaben"){$("kicker").textContent="Alle Bereiche";$("title").textContent="Aufgaben"}
+  else{$("kicker").textContent="Verbindung";$("title").textContent="Einstellungen"}
+  $("daynav").hidden=S.tab!=="heute";
+  $("addpanel").hidden=S.tab==="woche"||S.tab==="einst";$("setpanel").hidden=S.tab!=="einst";
+  const c=[];
+  if(PLAN&&(S.tab==="heute"||S.tab==="woche")){const lb=phaseLabel(S.tab==="heute"?d:TODAY);if(lb)c.push('<span class="chip">'+esc(lb)+'</span>');
+    const cd=PLAN.countdown;if(cd&&cd.from){const n=diff(fromKey(cd.from),TODAY);
+      if(n>0)c.push('<span class="chip warm">'+esc(cd.label)+' in <b>'+n+'</b> '+(n===1?"Tag":"Tagen")+'</span>');
+      else if(cd.to&&key(TODAY)<=cd.to)c.push('<span class="chip warm">'+esc(cd.label)+' bis '+short(fromKey(cd.to))+'</span>')}}
+  $("chips").innerHTML=c.join("");
+  $("main").innerHTML=S.tab==="heute"?viewDay():S.tab==="woche"?viewWeek():S.tab==="aufgaben"?viewTasks():"";
+  renderStatus();
+}
+
+/* ---------- Speicher: Gerät (sofort) + Google Sheet (Apps Script) ---------- */
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+let CFG=LS.get("dash.cfg")||{url:"",token:""};
+let Q=LS.get("dash.queue")||[];
+(function(){const c=LS.get("dash.state");if(!c)return;S.tasks=c.tasks||[];S.checks=c.checks||{};S.shift=c.shift||0;S.events=c.events||null;S.stampMs=c.stamp||0;PLAN=c.plan||null})();
+function persist(){LS.set("dash.state",{tasks:S.tasks,checks:S.checks,shift:S.shift,events:S.events,stamp:S.stampMs,plan:PLAN})}
+function banner(t){const b=$("banner");b.textContent=t;b.hidden=!t}
+const stamp=ms=>{const d=new Date(ms);return (+day0(d)===+TODAY?"":short(d)+" ")+hm(d)};
+function renderStatus(){const el=$("status");let cls="",txt="";
+  if(!CFG.url){cls="bad";txt="Nicht verbunden. Änderungen bleiben nur auf diesem Gerät."}
+  else if(Q.length){cls="wait";txt=Q.length+(Q.length===1?" Änderung wartet":" Änderungen warten")+" auf den Upload"+(S.syncErr?" ("+S.syncErr+")":"")}
+  else if(S.syncErr){cls="bad";txt=S.syncErr}
+  else if(S.sync==="load"){cls="wait";txt="Aktualisiere …"}
+  else{cls="ok";txt="Gespeichert"+(S.stampMs?" · Stand "+stamp(S.stampMs):"")}
+  el.innerHTML='<span class="dot '+cls+'"></span><span>'+esc(txt)+'</span>';
+  S.evStamp=S.stampMs?stamp(S.stampMs):null}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("Zeitüberschreitung")),ms))]);
+async function api(payload){
+  let r;try{r=await withTimeout(fetch(CFG.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({},payload,{token:CFG.token}))}),25000)}
+  catch(e){throw new Error(navigator.onLine===false?"kein Netz":"Server nicht erreichbar")}
+  let j;try{j=await r.json()}catch(e){throw new Error("unerwartete Antwort, Web-App-URL prüfen")}
+  if(!j.ok)throw new Error(j.error==="unauthorized"?"Token stimmt nicht":(j.error||"Fehler"));
+  return j}
+let busy=false;
+async function flush(){if(busy||!CFG.url||!Q.length)return;busy=true;
+  try{while(Q.length){const n=Math.min(Q.length,40);await api({action:"write",ops:Q.slice(0,n)});Q.splice(0,n);LS.set("dash.queue",Q)}S.syncErr=""}
+  catch(e){S.syncErr=e.message}
+  busy=false;renderStatus()}
+function push(op){Q.push(op);LS.set("dash.queue",Q);persist();renderStatus();flush()}
+const RANGE_FROM=add(monday(TODAY),-7),RANGE_TO=add(monday(TODAY),42);
+function ensureRange(){if(S.week<RANGE_FROM||add(S.week,6)>=RANGE_TO)S.evMsg="Termine sind nur von "+short(RANGE_FROM)+" bis "+short(add(RANGE_TO,-1))+" geladen.";else S.evMsg="";render()}
+let loading=false,lastLoad=0;
+async function load(){if(loading||!CFG.url)return;loading=true;S.sync="load";renderStatus();
+  try{await flush();
+    if(!Q.length){const j=await api({action:"load",fromMs:+RANGE_FROM,toMs:+RANGE_TO,fromKey:key(add(TODAY,-60))});
+      S.events=normEvents(j.events);if(j.plan)PLAN=j.plan;S.stampMs=j.at||Date.now();lastLoad=Date.now();
+      if(!Q.length){S.tasks=j.tasks||[];S.checks=j.checks||{};S.shift=Number(j.shift)||0}
+      S.syncErr="";persist()}
+  }catch(e){S.syncErr=e.message}
+  loading=false;S.sync="";render()}
+
+function setCheck(k,id,val,info){const cur=S.checks[k]||{done:{},info:{}};const dn=Object.assign({},cur.done),inf=Object.assign({},cur.info);
+  if(val){dn[id]=true;if(info)inf[id]=info}else{delete dn[id];delete inf[id]}
+  S.checks[k]={done:dn,info:inf};push({t:"check",date:k,id:id,val:!!val,info:info||""});render()}
+function taskUpdate(id,patch){const t=S.tasks.find(x=>x.id===id);if(!t)return;Object.assign(t,patch);push({t:"task",task:t});render()}
+function taskAdd(title,due,area){const t={id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:title,due:due||"",area:area||"Privat",done:false,doneAt:"",created:Date.now()};S.tasks.push(t);push({t:"task",task:t});render()}
+function taskDel(id){S.tasks=S.tasks.filter(t=>t.id!==id);push({t:"taskDel",id:id});render()}
+
+/* ---------- Bedienung ---------- */
+document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(!b)return;S.tab=b.dataset.tab;render();window.scrollTo(0,0)});
+$("daynav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const a=b.dataset.act;S.day=a==="today"?TODAY:add(S.day,a==="prev"?-1:1);render()});
+$("main").addEventListener("change",e=>{const el=e.target;
+  if(el.dataset.chk)setCheck(el.dataset.day,el.dataset.chk,el.checked,el.dataset.strength);
+  else if(el.dataset.task)taskUpdate(el.dataset.task,{done:el.checked,doneAt:el.checked?Date.now():""});
+  else if(el.dataset.due)taskUpdate(el.dataset.due,{due:el.value||""})});
+let delArmed=null;
+$("main").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const ds=b.dataset;
+  if(ds.edit){S.openTask=S.openTask===ds.edit?null:ds.edit;delArmed=null;render()}
+  else if(ds.move){taskUpdate(ds.move,{due:ds.to})}
+  else if(ds.del){if(delArmed===ds.del){delArmed=null;taskDel(ds.del)}else{delArmed=ds.del;b.textContent="Wirklich löschen?"}}
+  else if(ds.open){S.day=fromKey(ds.open);S.tab="heute";render();window.scrollTo(0,0)}
+  else if(ds.week!==undefined&&ds.week!==""){S.week=ds.week==="0"?monday(TODAY):add(S.week,7*Number(ds.week));ensureRange()}
+  else if(ds.shift){S.shift+=Number(ds.shift);push({t:"shift",shift:S.shift});render()}
+  else if(ds.toggledone){S.showDone=!S.showDone;render()}});
+$("addform").addEventListener("submit",e=>{e.preventDefault();const t=$("add-title").value.trim();if(!t)return;taskAdd(t,$("add-due").value,$("add-area").value);$("add-title").value="";$("add-title").focus()});
+$("cfg-url").value=CFG.url;$("cfg-token").value=CFG.token;
+$("cfgform").addEventListener("submit",async e=>{e.preventDefault();const u=$("cfg-url").value.trim(),t=$("cfg-token").value.trim(),m=$("cfg-msg");
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)&&!/^http:\/\/(localhost|127\.0\.0\.1)/.test(u)){m.textContent="Die URL muss mit https://script.google.com/ beginnen und auf /exec enden.";return}
+  CFG={url:u,token:t};m.textContent="Verbinde …";S.syncErr="";
+  await load();
+  if(S.syncErr){m.textContent="Verbindung fehlgeschlagen: "+S.syncErr+"."}else{LS.set("dash.cfg",CFG);m.textContent="Verbunden. Daten sind geladen."}
+  if(S.syncErr)CFG=LS.get("dash.cfg")||{url:"",token:""};renderStatus()});
+$("reload").addEventListener("click",()=>load());
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")return;if(+day0(new Date())!==+TODAY){location.reload();return}if(Date.now()-lastLoad>120000)load();else flush()});
+window.addEventListener("online",()=>{flush().then(()=>{if(Date.now()-lastLoad>120000)load()})});
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+render();load();
+})();
+</script>
+</body>
+</html>
